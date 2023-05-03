@@ -2,6 +2,7 @@ import { catchAsyncError } from "../middlewares/catchAsynError.js";
 import ErrorHandler from "../utils/errorHandler.js";
 import { User } from "../models/User.js";
 import { sendToken } from "../utils/sendToken.js";
+import { sendEmail } from "../utils/sendEmail.js";
 
 export const register = catchAsyncError(async (req, res, next) => {
   const { name, email, password } = req.body;
@@ -101,6 +102,37 @@ export const updateProfile = catchAsyncError(async (req, res, next) => {
 });
 
 export const updateProfilePicture = catchAsyncError(async (req, res, next) => {
+  //cloudinary Todo
+
+  res.status(200).json({
+    success: true,
+    message: "Profile Picture Updated Successfully",
+  });
+});
+
+export const forgetPassword = catchAsyncError(async (req, res, next) => {
+  //cloudinary Todo
+  const { email } = req.body;
+
+  const user = await User.findOne({ email });
+
+  if (!user) return next(new ErrorHandler("User Not Found", 400));
+
+  const resetToken = await user.getResetToken();
+
+  const url = `${process.env.FRONTEND_URL}/resetpassword/${resetToken}`;
+
+  const message = `Click on the link to reset your password.${url}.
+  If you have not request then please ignore`;
+  //Send token via email
+  await sendEmail(user.email, "CourseBundler Reset Password", message);
+
+  res.status(200).json({
+    success: true,
+    message: `Reset Token has been sent to ${user.email}`,
+  });
+});
+export const resetPassword = catchAsyncError(async (req, res, next) => {
   //cloudinary Todo
 
   res.status(200).json({
