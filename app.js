@@ -1,7 +1,7 @@
 import express from "express";
 import { config } from "dotenv";
 import ErrorMiddleware from "./middlewares/Error.js";
-
+import cookieParser from "cookie-parser";
 config({
   path: "./.env",
 });
@@ -14,6 +14,7 @@ app.use(
     extended: true,
   })
 );
+app.use(cookieParser());
 
 import course from "./routes/courseRoutes.js";
 import user from "./routes/userRoutes.js";
