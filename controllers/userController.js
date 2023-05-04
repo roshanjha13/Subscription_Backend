@@ -3,6 +3,8 @@ import ErrorHandler from "../utils/errorHandler.js";
 import { User } from "../models/User.js";
 import { sendToken } from "../utils/sendToken.js";
 import { sendEmail } from "../utils/sendEmail.js";
+import { Course } from "../models/Course.js";
+import crypto from "crypto";
 
 export const register = catchAsyncError(async (req, res, next) => {
   const { name, email, password } = req.body;
@@ -119,7 +121,7 @@ export const forgetPassword = catchAsyncError(async (req, res, next) => {
   if (!user) return next(new ErrorHandler("User Not Found", 400));
 
   const resetToken = await user.getResetToken();
-
+  await user.save();
   const url = `${process.env.FRONTEND_URL}/resetpassword/${resetToken}`;
 
   const message = `Click on the link to reset your password.${url}.
@@ -134,9 +136,69 @@ export const forgetPassword = catchAsyncError(async (req, res, next) => {
 });
 export const resetPassword = catchAsyncError(async (req, res, next) => {
   //cloudinary Todo
+  const { token } = req.params;
 
+  const resetPasswordToken = crypto
+    .createHash("sha256")
+    .update(token)
+    .digest("hex");
+
+  const user = await User.findOne({
+    resetPasswordToken,
+    resetPasswordExpire: {
+      $gt: Date.now(),
+    },
+  });
+  if (!user)
+    return next(new ErrorHandler("Token is invalid or has been expired"));
+
+  user.password = req.body.password;
+  user.resetPasswordExpire = undefined;
+  user.resetPasswordToken = undefined;
+
+  await user.save();
   res.status(200).json({
     success: true,
-    message: "Profile Picture Updated Successfully",
+    message: "Password  Updated Successfully",
+    token,
+  });
+});
+
+export const addToPlaylist = catchAsyncError(async (req, res, next) => {
+  const user = await User.findById(req.user._id);
+  const course = await Course.findById(req.body.id);
+  if (!course) return next(new ErrorHandler("Inavlid Course Id", 400));
+
+  const itemExist = user.playlist.find((item) => {
+    if (item.course.toString() === course._id.toString()) return true;
+  });
+  if (itemExist) return next(new ErrorHandler("Item already exist", 409));
+  user.playlist.push({
+    course: course._id,
+    poster: course.poster.url,
+  });
+
+  await user.save();
+  res.status(200).json({
+    success: true,
+    message: "Added to Playlist Successfully",
+  });
+});
+
+export const removeFromPlaylist = catchAsyncError(async (req, res, next) => {
+  const user = await User.findById(req.user._id);
+  const course = await Course.findById(req.query.id);
+  if (!course) return next(new ErrorHandler("Inavlid Course Id", 400));
+
+  //item honge jo hum delete ni karne
+  const newPlaylist = user.playlist.filter((item) => {
+    if (item.course.toString() !== course._id.toString()) return item;
+  });
+  user.playlist = newPlaylist;
+
+  await user.save();
+  res.status(200).json({
+    success: true,
+    message: "Removed From Playlist Successfully",
   });
 });
