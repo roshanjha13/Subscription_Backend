@@ -11,8 +11,7 @@ import { getDataUri } from "../utils/dataUri.js";
 export const register = catchAsyncError(async (req, res, next) => {
   const { name, email, password } = req.body;
   const file = req.file;
-  console.log(name, email, password);
-  console.log(file);
+
   if (!name || !email || !password || !file)
     return next(new ErrorHandler("Please enter all fields", 400));
 
@@ -39,7 +38,7 @@ export const register = catchAsyncError(async (req, res, next) => {
 
 export const login = catchAsyncError(async (req, res, next) => {
   const { email, password } = req.body;
-  console.log("email", email, "password", password);
+
   if (!email || !password)
     return next(new ErrorHandler("Please enter all fields", 400));
 
