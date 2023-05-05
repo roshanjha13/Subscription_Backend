@@ -224,3 +224,59 @@ export const removeFromPlaylist = catchAsyncError(async (req, res, next) => {
     message: "Removed From Playlist Successfully",
   });
 });
+
+//admin controllers
+export const getAllUsers = catchAsyncError(async (req, res, next) => {
+  const users = await User.find({});
+
+  res.status(200).json({
+    success: true,
+    // message: "Removed From Playlist Successfully",
+    users,
+  });
+});
+
+export const updateUserRole = catchAsyncError(async (req, res, next) => {
+  const user = await User.findById(req.params.id);
+  if (!user) return next(new ErrorHandler("user not found", 404));
+
+  if (user.role === "user") user.role = "admin";
+  else user.role = "user";
+  await user.save();
+  res.status(200).json({
+    success: true,
+    message: "Role updated Successfully",
+    user,
+  });
+});
+
+export const deleteUser = catchAsyncError(async (req, res, next) => {
+  const user = await User.findById(req.params.id);
+
+  if (!user) return next(new ErrorHandler("user not found", 404));
+
+  await cloudinary.v2.uploader.destroy(user.avatar.public_id);
+
+  await user.deleteOne();
+  res.status(200).json({
+    success: true,
+    message: `${user.name} deleted Successfully`,
+  });
+});
+
+export const deleteMyProfile = catchAsyncError(async (req, res, next) => {
+  const user = await User.findById(req.user._id);
+
+  await cloudinary.v2.uploader.destroy(user.avatar.public_id);
+
+  await user.deleteOne();
+  res
+    .status(200)
+    .cookie("token", null, {
+      expires: new Date(Date.now()),
+    })
+    .json({
+      success: true,
+      message: `${user.name} deleted Successfully`,
+    });
+});
