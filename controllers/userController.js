@@ -130,6 +130,8 @@ export const updateProfilePicture = catchAsyncError(async (req, res, next) => {
     public_id: mycloud.public_id,
     url: mycloud.secure_url,
   };
+  
+  await user.save();
 
   res.status(200).json({
     success: true,
