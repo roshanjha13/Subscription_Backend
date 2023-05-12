@@ -10,7 +10,7 @@ const router = express.Router();
 
 router.route("/contact").post(contact);
 
-router.route("/contactrequest").post(courseRequest);
+router.route("/courserequest").post(courseRequest);
 
 router
   .route("/admin/stats")
